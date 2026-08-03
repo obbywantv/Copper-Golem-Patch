@@ -1,0 +1,20 @@
+# Serveur de test local (Paper genere par run-paper) - contient des donnees
+# locales sensibles (pseudo/UUID Mojang, mot de passe RCON, sauvegarde du
+# monde) qui ne doivent jamais etre publiees.
+run/
+
+# Sorties de build Gradle
+build/
+.gradle/
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# Sources Affinity (fichiers de travail binaires, pas des livrables)
+*.af
+
+# OS
+.DS_Store
+Thumbs.db

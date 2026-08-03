@@ -1,0 +1,84 @@
+# ======================================================================
+#  Copper Golem Patch - Configuration
+# ======================================================================
+# This plugin gives Copper Golems a persistent memory of chests, and
+# lets them share that knowledge with each other, so they sort items
+# faster and never get stuck holding an item with nowhere to put it.
+#
+# You don't have to touch anything: the defaults below work well for
+# the vast majority of servers. This file just explains what each
+# setting does, for whenever you want to tweak it.
+# ======================================================================
+
+# Master on/off switch for the plugin.
+# Set to "false" to get vanilla golem behavior back without having to
+# uninstall the plugin (handy for comparison, or if something goes
+# wrong).
+enabled: true
+
+# ----------------------------------------------------------------------
+# Communication between golems (the "swarm")
+# ----------------------------------------------------------------------
+# When two golems pass close to each other, they share what each of
+# them has learned: which chest holds what, and which items currently
+# have nowhere to go. That way a golem doesn't need to have visited a
+# chest itself to know it exists.
+gossip:
+  # Set to "false" if you'd rather each golem only learn from its own
+  # experience, without sharing anything with the others.
+  enabled: true
+
+  # Maximum distance (in blocks) between two golems for them to share
+  # their knowledge when they pass each other. Increase this if your
+  # golems work over a large area and rarely cross paths. Lower it if
+  # you have a lot of golems clustered in the same spot (beyond
+  # 50-100 nearby golems) and notice the server slowing down.
+  radius: 12.0
+
+  # How often (in game ticks - 20 ticks = 1 second) golems check
+  # whether they're close enough to another golem to share knowledge.
+  # A lower value makes sharing happen faster but costs a bit more
+  # computation; a higher value saves resources but sharing takes
+  # longer to spread.
+  interval-ticks: 30
+
+# ----------------------------------------------------------------------
+# Each golem's memory
+# ----------------------------------------------------------------------
+memory:
+  # Maximum number of different chests a golem keeps in memory. Past
+  # this limit, it forgets the chest it has seen longest ago to make
+  # room. Increase this if you have a very large setup (lots of
+  # different chests) and golems seem to "forget" chests too quickly.
+  max-entries-per-golem: 32
+
+  # How long (in seconds) before a golem forgets what it learned about
+  # a chest if it never passes by to recheck it. 1800 seconds = 30
+  # minutes. You normally don't need to touch this setting.
+  entry-ttl-seconds: 1800
+
+# ----------------------------------------------------------------------
+# What happens when an item has nowhere to go?
+# ----------------------------------------------------------------------
+# If a golem picks up an item from a copper chest but no storage chest
+# will accept it (none are empty, none already hold that item type), it
+# would otherwise wander around forever holding it. To avoid that, the
+# golem puts it back in a copper chest and moves on to a different
+# item, while remembering (and telling other golems about it via the
+# sharing above) that this item currently has "nowhere to go".
+give-up:
+  # Safety net only: maximum number of different chests the golem can
+  # reject before giving up on an item, even if its search isn't
+  # finished yet. Normally, the golem gives up on its own as soon as it
+  # has finished checking every chest it knows about without finding a
+  # solution - this number is just a guard rail for very large setups
+  # (dozens of chests) to avoid an overly long search. You normally
+  # don't need to change it.
+  after-rejections: 50
+
+  # How long (in seconds) an item stays marked as "can't be sorted
+  # right now" before the golem tries again on its own. The plugin also
+  # automatically retries sooner as soon as a matching chest (empty, or
+  # of the right type) becomes available again. 300 seconds = 5
+  # minutes.
+  unplaceable-ttl-seconds: 300
