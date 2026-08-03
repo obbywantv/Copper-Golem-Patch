@@ -48,10 +48,17 @@ public record PluginConfig(
             giveUpAfterRejections = 50;
         }
 
-        long unplaceableTtlSeconds = config.getLong("give-up.unplaceable-ttl-seconds", 300);
+        // This doubles as the retry clock, so it has to stay short. A golem
+        // that has given up on every type it knows stops picking anything up;
+        // with nothing in hand vanilla only ever offers it copper chests, so
+        // it never runs a deposit search, never observes a newly placed empty
+        // chest, and never reaches the code that clears these marks. Mark
+        // expiry is the only way out of that cycle - at 300s it left golems
+        // idle for five minutes, ignoring chests placed right next to them.
+        long unplaceableTtlSeconds = config.getLong("give-up.unplaceable-ttl-seconds", 20);
         if (unplaceableTtlSeconds <= 0) {
-            plugin.getLogger().warning("give-up.unplaceable-ttl-seconds must be > 0, using default 300");
-            unplaceableTtlSeconds = 300;
+            plugin.getLogger().warning("give-up.unplaceable-ttl-seconds must be > 0, using default 20");
+            unplaceableTtlSeconds = 20;
         }
 
         return new PluginConfig(

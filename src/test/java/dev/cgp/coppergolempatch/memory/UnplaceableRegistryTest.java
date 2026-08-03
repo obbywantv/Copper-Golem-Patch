@@ -36,6 +36,22 @@ class UnplaceableRegistryTest {
     }
 
     @Test
+    void markExpiryIsTheRetryClockThatUnsticksAGolem() {
+        // Regression: a golem that gave up on every type it knew stopped
+        // picking anything up. Empty-handed, vanilla only offers it copper
+        // chests, so it never ran a deposit search, never observed a newly
+        // placed empty chest, and never reached the code clearing these
+        // marks - "to clear the marks it must pick something up, to pick
+        // something up the marks must be cleared". Expiry is the only exit
+        // from that cycle, so the window has to stay on a human timescale:
+        // at the former 300s default, golems ignored chests placed right
+        // next to them for five minutes.
+        UnplaceableEntry mark = new UnplaceableEntry(Material.DIAMOND, 0L);
+        assertFalse(mark.isStale(20, 19_000L), "should still hold just before the retry window");
+        assertTrue(mark.isStale(20, 21_000L), "should expire so the golem probes again");
+    }
+
+    @Test
     void mergeKeepsFreshestMarkOnConflictAndUnionsDisjointTypes() {
         UnplaceableRegistry a = new UnplaceableRegistry();
         a.markUnplaceable(Material.DIAMOND, 1000L, 10);

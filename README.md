@@ -66,7 +66,7 @@ Tous les réglages sont documentés dans [config.yml](src/main/resources/config.
 | `memory.max-entries-per-golem` | `32` | Nombre de coffres retenus par golem. |
 | `memory.entry-ttl-seconds` | `1800` | Oubli d'un coffre non revu. |
 | `give-up.after-rejections` | `50` | Garde-fou sur la longueur d'une recherche. |
-| `give-up.unplaceable-ttl-seconds` | `300` | Durée du marquage « insortable ». |
+| `give-up.unplaceable-ttl-seconds` | `20` | Durée du marquage « insortable » — sert aussi d'horloge de réessai : c'est ce qui permet à un golem bloqué de découvrir un coffre posé après coup. |
 
 ## Développement
 

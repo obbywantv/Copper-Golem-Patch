@@ -76,9 +76,15 @@ give-up:
   # don't need to change it.
   after-rejections: 50
 
-  # How long (in seconds) an item stays marked as "can't be sorted
-  # right now" before the golem tries again on its own. The plugin also
-  # automatically retries sooner as soon as a matching chest (empty, or
-  # of the right type) becomes available again. 300 seconds = 5
-  # minutes.
-  unplaceable-ttl-seconds: 300
+  # How long (in seconds) an item stays marked as "can't be sorted right
+  # now" before the golem tries again.
+  #
+  # This is also how often a stuck golem retries, so keep it short. While
+  # a golem holds nothing, the game only ever offers it copper chests to
+  # look at - it never looks at a storage chest, so it cannot notice that
+  # you just placed a new empty one. Retrying is what makes it find them.
+  #
+  # Raising this makes golems ignore newly placed chests for that long.
+  # Lowering it makes them retry more often; the cost is one wasted trip
+  # per retry, and only for a golem that has nothing else to do anyway.
+  unplaceable-ttl-seconds: 20
