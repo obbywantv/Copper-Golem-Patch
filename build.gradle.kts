@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "dev.cgp"
-version = "0.1.0"
+version = "0.2.0"
 
 // --- Matrice des versions Minecraft supportees ---------------------------
 // Le plancher est 1.21.9 : c'est la version qui a introduit les Copper
@@ -80,6 +80,11 @@ tasks.withType<JavaCompile>().configureEach {
 tasks.processResources {
     // api-version declare le plancher supporte, pas la version compilee :
     // Paper accepte un plugin dont l'api-version est anterieure au serveur.
+    // Sans ces deux declarations, Gradle considere la tache a jour quand
+    // seules ces valeurs changent et reutilise le paper-plugin.yml genere
+    // precedemment : un bump de version produisait un jar nomme 0.2.0 dont
+    // le descripteur annoncait encore 0.1.0.
+    inputs.property("pluginVersion", project.version)
     inputs.property("apiVersion", supportedVersions.keys.first())
     filesMatching("paper-plugin.yml") {
         expand(
