@@ -1,0 +1,42 @@
+name: Release
+
+# Declenche par un tag de version : git tag v0.2.0 && git push origin v0.2.0
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+      - uses: gradle/actions/setup-gradle@v4
+
+      # On revalide toute la matrice avant de publier : une release ne doit
+      # jamais sortir si une des versions supportees ne compile plus.
+      - name: Verifier la matrice complete
+        run: |
+          for v in 1.21.9 1.21.10 1.21.11 26.1.2 26.2; do
+            echo "::group::MC $v"
+            ./gradlew build -PmcVersion=$v || exit 1
+            echo "::endgroup::"
+          done
+
+      - name: Build de l'artefact plancher
+        run: ./gradlew clean build
+
+      - name: Publier la release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ github.ref_name }}" build/libs/*.jar \
+            --title "${{ github.ref_name }}" \
+            --generate-notes \
+            --notes "Compatible Minecraft 1.21.9 -> 26.2 (Paper). Requiert Java 21 minimum."
