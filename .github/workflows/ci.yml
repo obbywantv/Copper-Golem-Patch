@@ -10,10 +10,12 @@ permissions:
   contents: read
 
 jobs:
-  # Compile + tests contre chaque version de la matrice. Le but n'est pas de
-  # produire cinq artefacts, mais de detecter tout de suite si une version
-  # recente de l'API Paper casse le source (signature changee, API retiree).
+  # Compile + test against every version in the matrix. The point is not to
+  # produce five artifacts, but to catch straight away if a recent Paper API
+  # breaks the source (changed signature, removed API).
   compatibility:
+    # NOTE: this job name becomes a required status check name in the branch
+    # ruleset. Renaming it silently invalidates that requirement.
     name: MC ${{ matrix.minecraft }}
     runs-on: ubuntu-latest
     strategy:
@@ -23,8 +25,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # JDK 25 meme pour cibler du bytecode 21 : lire les jars paper-api 26.x
-      # (class file 69) l'exige.
+      # JDK 25 even when targeting Java 21 bytecode: reading the paper-api
+      # 26.x jars (class file 69) requires it.
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -35,16 +37,17 @@ jobs:
       - name: Build + tests
         run: ./gradlew build -PmcVersion=${{ matrix.minecraft }}
 
-      - name: Rapports de tests
+      - name: Test reports
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: tests-${{ matrix.minecraft }}
           path: build/reports/tests/test
 
-  # L'artefact distribuable : compile contre le plancher, donc bytecode Java
-  # 21, donc chargeable sur toute la plage 1.21.9 -> 26.2.
+  # The distributable artifact: built against the floor, hence Java 21
+  # bytecode, hence loadable across the whole 1.21.9 -> 26.2 range.
   artifact:
+    # NOTE: see the naming warning on the job above.
     name: Jar distribuable
     runs-on: ubuntu-latest
     needs: compatibility
@@ -56,10 +59,10 @@ jobs:
           java-version: '25'
       - uses: gradle/actions/setup-gradle@v4
 
-      - name: Build plancher
+      - name: Build against the floor version
         run: ./gradlew build
 
-      - name: Verifier que le bytecode est bien du Java 21
+      - name: Check the bytecode really is Java 21
         run: |
           jar=$(ls build/libs/*.jar)
           unzip -o -q "$jar" -d /tmp/cgp
@@ -67,7 +70,7 @@ jobs:
                   | grep -m1 'major version' | tr -dc '0-9')
           echo "class file major version = $major"
           if [ "$major" != "65" ]; then
-            echo "::error::Bytecode $major au lieu de 65 (Java 21) - le jar ne chargerait pas sur 1.21.9-1.21.11"
+            echo "::error::Bytecode $major instead of 65 (Java 21) - the jar would not load on 1.21.9-1.21.11"
             exit 1
           fi
 
