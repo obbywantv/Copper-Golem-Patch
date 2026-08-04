@@ -1,29 +1,29 @@
 # Copper Golem Patch
 
-Plugin Paper qui donne aux Copper Golems une **mémoire persistante** du contenu des coffres et leur permet de **se la partager** entre eux, pour qu'ils arrêtent de re-vérifier des coffres dont ils savent déjà qu'ils ne conviennent pas.
+A Paper plugin that gives Copper Golems a **persistent memory** of what each chest holds, and lets them **share it with each other**, so they stop re-checking chests they already know are wrong.
 
 ![Copper Golem Patch](Images/Copper%20Golem%20Patch.png)
 
-## Le problème
+## The problem
 
-En vanilla, un golem de cuivre réévalue chaque coffre à chaque passage : il s'y rend, l'examine ~3 s, et repart si le contenu ne correspond pas. Il n'apprend rien. Pire, s'il ramasse un objet qu'aucun coffre n'accepte, il le garde en main indéfiniment et bloque tout le tri.
+In vanilla, a copper golem re-evaluates every chest on every pass: it walks over, examines it for ~3 s, and leaves if the contents don't match. It learns nothing. Worse, if it picks up an item no chest will accept, it holds onto it indefinitely and the whole sorting operation stalls.
 
-## Ce que fait le plugin
+## What the plugin does
 
-| Mécanisme | Effet |
+| Mechanism | Effect |
 |---|---|
-| **Mémoire par golem** | Chaque golem retient ce qu'il a vu dans chaque coffre, persisté dans son PDC (survit aux redémarrages). |
-| **Gossip** | Deux golems qui se croisent échangent leurs mémoires — un golem connaît des coffres qu'il n'a jamais visités. |
-| **Skip informé** | Un coffre connu comme non-conforme est refusé sans déplacement ni examen. |
-| **Anti-blocage** | Un objet que personne n'accepte est reposé dans un coffre de cuivre et marqué « insortable », partagé par gossip, avec réessai automatique dès qu'une place se libère. |
-| **Dépriorisation** | Si le premier slot d'un coffre de cuivre contient un objet insortable, il est permuté avec le premier objet sortable — sinon il bloquerait tout ce qu'il y a derrière. |
+| **Per-golem memory** | Each golem remembers what it saw in each chest, persisted in its PDC (survives restarts). |
+| **Gossip** | Two golems passing each other exchange memories — a golem knows about chests it never visited. |
+| **Informed skipping** | A chest known not to match is rejected without the walk and the examine. |
+| **Stall breaker** | An item nobody accepts is put back in a copper chest and marked "unplaceable", shared by gossip, and retried automatically once room frees up. |
+| **Deprioritising** | If the first slot of a copper chest holds an unplaceable item, it is swapped with the first sortable one — otherwise it would block everything behind it. |
 
-![Mémoire](Images/MEMORY.png)
+![Memory](Images/MEMORY.png)
 ![Gossip](Images/GOSSIP.png)
 
-## Compatibilité
+## Compatibility
 
-| Minecraft | Java requis | Statut |
+| Minecraft | Java required | Status |
 |---|---|---|
 | 1.21.9 | 21 | ✅ |
 | 1.21.10 | 21 | ✅ |
@@ -31,89 +31,103 @@ En vanilla, un golem de cuivre réévalue chaque coffre à chaque passage : il s
 | 26.1.2 | 25 | ✅ |
 | 26.2 | 25 | ✅ |
 
-**1.21.9 est le plancher absolu** : c'est la version qui a introduit les Copper Golems, il n'y a rien à patcher avant.
+**1.21.9 is the absolute floor**: it is the version that introduced Copper Golems, so there is nothing to patch before it.
 
-Un **jar unique** couvre toute la plage. Il est compilé contre l'API 1.21.9 et émet du bytecode Java 21, ce qui le rend chargeable aussi bien sur un serveur Java 21 que Java 25. Chaque version de la matrice est recompilée et testée à chaque commit ([CI](../../actions)).
+A **single jar** covers the whole range. It is compiled against the 1.21.9 API and emits Java 21 bytecode, which makes it loadable on both Java 21 and Java 25 servers. Every version in the matrix is recompiled and tested on every commit ([CI](../../actions)).
 
-Serveur **Paper** requis (le plugin dépend de `ItemTransportingEntityValidateTargetEvent`, une API Paper) — Spigot et Bukkit ne conviennent pas.
+Requires **Paper** — the plugin depends on `ItemTransportingEntityValidateTargetEvent`, a Paper API, so Spigot and Bukkit will not work. Not Folia-compatible.
 
 ## Installation
 
-1. Récupérer `CopperGolemPatch-x.y.z.jar` depuis les [releases](../../releases).
-2. Le déposer dans `plugins/`.
-3. Redémarrer le serveur. Le fichier `plugins/CopperGolemPatch/config.yml` est généré avec des valeurs par défaut utilisables telles quelles.
+1. Grab `copper-golem-patch-x.y.z.jar` from the [releases](../../releases).
+2. Drop it into `plugins/`.
+3. Restart the server. `plugins/CopperGolemPatch/config.yml` is generated with defaults that work as-is.
 
-## Commandes
+## Commands
 
-`/cgp` — permission `coppergolempatch.admin` (op par défaut).
+`/cgp` — permission `coppergolempatch.admin` (op by default).
 
-| Sous-commande | Effet |
+| Subcommand | Effect |
 |---|---|
-| `/cgp reload` | Recharge `config.yml` à chaud. |
-| `/cgp info` | État de la mémoire du golem le plus proche (< 10 blocs) : coffres connus, ancienneté, objets insortables. |
-| `/cgp toggle` | Bascule `enabled` et sauvegarde. |
+| `/cgp reload` | Reloads `config.yml` at runtime. |
+| `/cgp info` | Memory state of the nearest golem (within 10 blocks): known chests, age, unplaceable items. |
+| `/cgp toggle` | Flips `enabled` and saves. |
 
 ## Configuration
 
-Tous les réglages sont documentés dans [config.yml](src/main/resources/config.yml). Les principaux :
+Every setting is documented inline in [config.yml](src/main/resources/config.yml). The main ones:
 
-| Clé | Défaut | Rôle |
+| Key | Default | Purpose |
 |---|---|---|
-| `enabled` | `true` | Coupe-circuit : `false` rend le comportement vanilla sans désinstaller. |
-| `gossip.enabled` | `true` | Partage de mémoire entre golems. |
-| `gossip.radius` | `12.0` | Distance max (blocs) pour un échange. |
-| `gossip.interval-ticks` | `30` | Fréquence de vérification (20 ticks = 1 s). |
-| `memory.max-entries-per-golem` | `32` | Nombre de coffres retenus par golem. |
-| `memory.entry-ttl-seconds` | `1800` | Oubli d'un coffre non revu. |
-| `give-up.after-rejections` | `50` | Garde-fou sur la longueur d'une recherche. |
-| `give-up.unplaceable-ttl-seconds` | `20` | Durée du marquage « insortable » — sert aussi d'horloge de réessai : c'est ce qui permet à un golem bloqué de découvrir un coffre posé après coup. |
+| `enabled` | `true` | Kill switch: `false` restores vanilla behaviour without uninstalling. |
+| `gossip.enabled` | `true` | Memory sharing between golems. |
+| `gossip.radius` | `12.0` | Max distance (blocks) for an exchange. |
+| `gossip.interval-ticks` | `30` | Check frequency (20 ticks = 1 s). |
+| `memory.max-entries-per-golem` | `32` | Chests remembered per golem. |
+| `memory.entry-ttl-seconds` | `1800` | Forget a chest that is never revisited. |
+| `give-up.after-rejections` | `50` | Guard rail on how long a search may run. |
+| `give-up.unplaceable-ttl-seconds` | `20` | How long an item stays marked "unplaceable" — this doubles as the retry clock, and it is what lets a stuck golem discover a chest placed after the fact. |
 
-## Développement
+## Good to know
 
-Build par défaut = build plancher = artefact distribuable :
+A storage chest accepts an item only if it is **empty**, or **already contains that item type**. Free slots alone are not enough — a chest holding a single stone will not accept dirt.
+
+This is vanilla Minecraft's own rule, not something this plugin adds; you can confirm it with `/cgp toggle`. In practice: plan roughly **one destination chest per item type** you want sorted. With fewer chests than item types, the leftovers stay in the copper chests, plugin or not.
+
+## Development
+
+The default build is the floor build, and it is the distributable artifact:
 
 ```bash
 ./gradlew build
 ```
 
-Compiler/tester contre une autre version de la matrice :
+Compile and test against another version in the matrix:
 
 ```bash
 ./gradlew build -PmcVersion=26.2
 ```
 
-Lancer un serveur de test (monde isolé dans `run/<version>/`, jamais commité) :
+Run a test server (world isolated in `run/<version>/`, never committed):
 
 ```bash
 ./gradlew runServer -PserverVersion=26.2
 ```
 
-Vérifier que le jar plancher charge bien sur un serveur récent — les deux propriétés sont indépendantes :
+Check that the floor jar really does load on a recent server — the two properties are independent:
 
 ```bash
 ./gradlew runServer -PmcVersion=1.21.9 -PserverVersion=26.2
 ```
 
-> Les mondes ne sont pas rétro-compatibles : un monde ouvert en 26.2 ne se rouvre pas en 1.21.9. C'est pourquoi chaque version a son propre répertoire de run.
+> Worlds are not backward compatible: a world opened in 26.2 will not reopen in 1.21.9. Hence one run directory per version.
 
-### Ajouter une version à la matrice
+### Adding a version to the matrix
 
-Une seule ligne à ajouter dans `supportedVersions` de [build.gradle.kts](build.gradle.kts), plus l'entrée correspondante dans la matrice de [ci.yml](.github/workflows/ci.yml). Si la CI passe, la version est couverte sans changement de code.
+One line in `supportedVersions` in [build.gradle.kts](build.gradle.kts), plus the matching entry in the matrix in [ci.yml](.github/workflows/ci.yml). If CI passes, the version is covered with no code change.
+
+> The CI job names double as the required status check names in the branch ruleset. Renaming one silently invalidates the configured requirement — update the ruleset alongside.
 
 ### Branches
 
-`main` est toujours releasable et protégée. Tout passe par une branche courte (`feat/…`, `fix/…`) et une pull request validée par la CI.
+`main` is always releasable and protected. Everything goes through a short-lived branch (`feat/…`, `fix/…`) and a pull request validated by CI.
 
-Pas de branche par version de Minecraft : un code source unique couvre toute la matrice, la CI le prouve à chaque commit. Des branches par version dupliqueraient le code sans bénéfice.
+No per-Minecraft-version branches: a single source covers the whole matrix, and CI proves it on every commit. Per-version branches would duplicate the code for no benefit.
 
-### Publier une release
+### Cutting a release
 
 ```bash
 git tag v0.2.0 && git push origin v0.2.0
 ```
 
-Le workflow [release.yml](.github/workflows/release.yml) revalide la matrice complète, construit le jar plancher et crée la release GitHub avec le jar attaché.
+[release.yml](.github/workflows/release.yml) revalidates the full matrix, builds the floor jar, and creates the GitHub release with the jar attached.
 
-## Licence
+Bump `version` in [build.gradle.kts](build.gradle.kts) **before** tagging — the tag does not set it, and the jar would otherwise ship claiming the previous version.
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md).
+
+## License
 
 [MIT](LICENSE)
