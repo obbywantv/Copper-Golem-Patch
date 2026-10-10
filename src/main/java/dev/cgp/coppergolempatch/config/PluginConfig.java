@@ -11,7 +11,8 @@ public record PluginConfig(
         int maxEntriesPerGolem,
         long entryTtlSeconds,
         int giveUpAfterRejections,
-        long unplaceableTtlSeconds
+        long unplaceableTtlSeconds,
+        boolean itemFrameLabelsEnabled
 ) {
 
     public static PluginConfig load(JavaPlugin plugin) {
@@ -69,7 +70,8 @@ public record PluginConfig(
                 maxEntriesPerGolem,
                 entryTtlSeconds,
                 giveUpAfterRejections,
-                unplaceableTtlSeconds
+                unplaceableTtlSeconds,
+                config.getBoolean("item-frame-labels.enabled", true)
         );
     }
 }

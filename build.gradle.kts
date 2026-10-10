@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "dev.cgp"
-version = "0.2.0"
+version = "0.3.0"
 
 // --- Supported Minecraft versions ----------------------------------------
 // 1.21.9 is the floor: it is the version that introduced Copper Golems, so
@@ -17,6 +17,7 @@ val supportedVersions = linkedMapOf(
     "1.21.11" to "1.21.11-R0.1-SNAPSHOT",
     "26.1.2" to "26.1.2.build.+",
     "26.2" to "26.2.build.+",
+    "26.3" to "26.3.build.+",
 )
 
 /**

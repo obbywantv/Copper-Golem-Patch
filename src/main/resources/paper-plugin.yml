@@ -2,7 +2,9 @@ name: CopperGolemPatch
 version: '${version}'
 main: dev.cgp.coppergolempatch.CopperGolemPatchPlugin
 api-version: '${apiVersion}'
-author: Craftekture
+authors:
+  - Craftekture
+  - ObbywanTv
 description: Gives Copper Golems a persistent memory of which chests hold what, and lets them share that knowledge with nearby golems so they stop re-checking chests they already know are wrong.
 permissions:
   coppergolempatch.admin:

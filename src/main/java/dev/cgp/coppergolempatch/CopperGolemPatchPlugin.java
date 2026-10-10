@@ -1,6 +1,7 @@
 package dev.cgp.coppergolempatch;
 
 import dev.cgp.coppergolempatch.command.CgpCommand;
+import dev.cgp.coppergolempatch.config.ConfigInstaller;
 import dev.cgp.coppergolempatch.config.PluginConfig;
 import dev.cgp.coppergolempatch.gossip.GossipTask;
 import dev.cgp.coppergolempatch.listener.TargetValidationListener;
@@ -24,7 +25,8 @@ public final class CopperGolemPatchPlugin extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        saveDefaultConfig();
+        getDataFolder().mkdirs();
+        ConfigInstaller.ensureUpToDate(this);
         config = PluginConfig.load(this);
         ChestMemoryCodec codec = new ChestMemoryCodec(this, getLogger());
         cache = new GolemMemoryCache(codec);
@@ -38,7 +40,9 @@ public final class CopperGolemPatchPlugin extends JavaPlugin {
             commands.register("cgp", "Copper Golem Patch admin commands", new CgpCommand(this, cache));
         });
 
-        scheduleGossipTask();
+        if (config.enabled()) {
+            scheduleGossipTask();
+        }
 
         getLogger().info("Copper Golem Patch enabled.");
     }
@@ -62,12 +66,20 @@ public final class CopperGolemPatchPlugin extends JavaPlugin {
         return config;
     }
 
-    public void reloadPluginConfig() {
+    /**
+     * @return {@code true} if {@code config.yml} was replaced because it was outdated
+     */
+    public boolean reloadPluginConfig() {
+        boolean replaced = ConfigInstaller.ensureUpToDate(this);
         config = PluginConfig.load(this);
         if (gossipTask != null) {
             gossipTask.cancel();
+            gossipTask = null;
         }
-        scheduleGossipTask();
+        if (config.enabled()) {
+            scheduleGossipTask();
+        }
+        return replaced;
     }
 
     private void scheduleGossipTask() {

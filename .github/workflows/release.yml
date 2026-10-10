@@ -23,7 +23,7 @@ jobs:
       # out while one of the supported versions no longer compiles.
       - name: Verify the full matrix
         run: |
-          for v in 1.21.9 1.21.10 1.21.11 26.1.2 26.2; do
+          for v in 1.21.9 1.21.10 1.21.11 26.1.2 26.2 26.3; do
             echo "::group::MC $v"
             ./gradlew build -PmcVersion=$v || exit 1
             echo "::endgroup::"
@@ -39,4 +39,4 @@ jobs:
           gh release create "${{ github.ref_name }}" build/libs/*.jar \
             --title "${{ github.ref_name }}" \
             --generate-notes \
-            --notes "Compatible with Minecraft 1.21.9 -> 26.2 (Paper). Requires Java 21 or newer."
+            --notes "Compatible with Minecraft 1.21.9 -> 26.3 (Paper). Requires Java 21 or newer."

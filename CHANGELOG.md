@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.3.0
+
+### Compatibility
+
+- Adds Minecraft **26.3** to the supported Paper matrix (still one jar from 1.21.9 through 26.3).
+
+### Added
+
+- **Item frame labels** (`item-frame-labels.enabled`, default `true`): a Chest / Trapped Chest with an attached item frame (regular or glowing, visible or invisible) accepts only that item **type**, matching vanilla rules (ignore durability, enchantments, names, etc.). Chests without a frame, or with an empty frame, stay fully vanilla — including empty chests accepting any item.
+- `/cgp labels` while looking at a chest shows which label type(s) the plugin sees.
+- `config_version` in `config.yml` (do not edit): outdated configs are backed up and replaced from the jar on enable / `/cgp reload`.
+
+### Fixed
+
+- Packed rows of double chests: a frame only labels the chest it is attached to (no label stealing from the next chest in the row).
+- Empty labeled chests no longer accept wrong types (target validation + memory).
+
 ## 0.2.0
 
 First public release.

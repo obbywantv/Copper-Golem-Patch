@@ -21,7 +21,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        minecraft: ['1.21.9', '1.21.10', '1.21.11', '26.1.2', '26.2']
+        minecraft: ['1.21.9', '1.21.10', '1.21.11', '26.1.2', '26.2', '26.3']
     steps:
       - uses: actions/checkout@v4
 
@@ -45,7 +45,7 @@ jobs:
           path: build/reports/tests/test
 
   # The distributable artifact: built against the floor, hence Java 21
-  # bytecode, hence loadable across the whole 1.21.9 -> 26.2 range.
+  # bytecode, hence loadable across the whole 1.21.9 -> 26.3 range.
   artifact:
     # NOTE: see the naming warning on the job above.
     name: Distributable jar

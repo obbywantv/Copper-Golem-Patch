@@ -1,90 +1,89 @@
 # ======================================================================
 #  Copper Golem Patch - Configuration
 # ======================================================================
-# This plugin gives Copper Golems a persistent memory of chests, and
-# lets them share that knowledge with each other, so they sort items
-# faster and never get stuck holding an item with nowhere to put it.
+# Defaults are fine for most servers. Change a value only if you know
+# you need different behaviour.
 #
-# You don't have to touch anything: the defaults below work well for
-# the vast majority of servers. This file just explains what each
-# setting does, for whenever you want to tweak it.
+# After editing: /cgp reload
 # ======================================================================
 
-# Master on/off switch for the plugin.
-# Set to "false" to get vanilla golem behavior back without having to
-# uninstall the plugin (handy for comparison, or if something goes
-# wrong).
+# ----------------------------------------------------------------------
+# DO NOT CHANGE — used by the plugin to detect outdated config files.
+# If this number is missing or older than the plugin expects, your file
+# is backed up and replaced with a fresh one from the jar.
+# ----------------------------------------------------------------------
+config_version: 1
+
+# Master switch for the whole plugin.
+# Does: true = memory, gossip, give-up, and (if enabled below) item-frame
+#   labels all run. false = golems behave like vanilla again.
+# Does not: uninstall the plugin or delete golem memory already stored.
 enabled: true
 
 # ----------------------------------------------------------------------
-# Communication between golems (the "swarm")
+# Gossip — golems sharing knowledge when they pass each other
 # ----------------------------------------------------------------------
-# When two golems pass close to each other, they share what each of
-# them has learned: which chest holds what, and which items currently
-# have nowhere to go. That way a golem doesn't need to have visited a
-# chest itself to know it exists.
 gossip:
-  # Set to "false" if you'd rather each golem only learn from its own
-  # experience, without sharing anything with the others.
+  # Does: when two golems are close, they copy each other's chest memory
+  #   and "unplaceable" marks so the swarm learns faster.
+  # Does not: create a server-wide shared database; only nearby pairs share.
   enabled: true
 
-  # Maximum distance (in blocks) between two golems for them to share
-  # their knowledge when they pass each other. Increase this if your
-  # golems work over a large area and rarely cross paths. Lower it if
-  # you have a lot of golems clustered in the same spot (beyond
-  # 50-100 nearby golems) and notice the server slowing down.
+  # Does: sets how close (in blocks) two golems must be to share.
+  # Does not: change how far a golem walks to find a chest.
   radius: 12.0
 
-  # How often (in game ticks - 20 ticks = 1 second) golems check
-  # whether they're close enough to another golem to share knowledge.
-  # A lower value makes sharing happen faster but costs a bit more
-  # computation; a higher value saves resources but sharing takes
-  # longer to spread.
+  # Does: how often (in ticks; 20 ticks = 1 second) the plugin checks
+  #   whether golems are close enough to share.
+  # Does not: change vanilla golem movement speed or search timing.
   interval-ticks: 30
 
 # ----------------------------------------------------------------------
-# Each golem's memory
+# Memory — what each golem remembers about chests
 # ----------------------------------------------------------------------
 memory:
-  # Maximum number of different chests a golem keeps in memory. Past
-  # this limit, it forgets the chest it has seen longest ago to make
-  # room. Increase this if you have a very large setup (lots of
-  # different chests) and golems seem to "forget" chests too quickly.
+  # Does: caps how many different chests one golem remembers. Oldest
+  #   entries are forgotten first when the cap is hit.
+  # Does not: limit how many chests exist in your world.
   max-entries-per-golem: 32
 
-  # How long (in seconds) before a golem forgets what it learned about
-  # a chest if it never passes by to recheck it. 1800 seconds = 30
-  # minutes. You normally don't need to touch this setting.
+  # Does: after this many seconds without revisiting a chest, that
+  #   memory entry expires (1800 = 30 minutes).
+  # Does not: delete items from chests or reset vanilla golem AI.
   entry-ttl-seconds: 1800
 
 # ----------------------------------------------------------------------
-# What happens when an item has nowhere to go?
+# Give-up — when an item has nowhere to be deposited
 # ----------------------------------------------------------------------
-# If a golem picks up an item from a copper chest but no storage chest
-# will accept it (none are empty, none already hold that item type), it
-# would otherwise wander around forever holding it. To avoid that, the
-# golem puts it back in a copper chest and moves on to a different
-# item, while remembering (and telling other golems about it via the
-# sharing above) that this item currently has "nowhere to go".
+# If a golem holds an item and no known storage chest will take it, it
+# puts the item back in a copper chest, marks that type briefly, and
+# tries something else.
 give-up:
-  # Safety net only: maximum number of different chests the golem can
-  # reject before giving up on an item, even if its search isn't
-  # finished yet. Normally, the golem gives up on its own as soon as it
-  # has finished checking every chest it knows about without finding a
-  # solution - this number is just a guard rail for very large setups
-  # (dozens of chests) to avoid an overly long search. You normally
-  # don't need to change it.
+  # Does: safety cap — give up after this many distinct chest rejections
+  #   even if the search is still going (large farms).
+  # Does not: change the normal "finished searching" give-up; that still
+  #   happens on its own when the search goes quiet.
   after-rejections: 50
 
-  # How long (in seconds) an item stays marked as "can't be sorted right
-  # now" before the golem tries again.
-  #
-  # This is also how often a stuck golem retries, so keep it short. While
-  # a golem holds nothing, the game only ever offers it copper chests to
-  # look at - it never looks at a storage chest, so it cannot notice that
-  # you just placed a new empty one. Retrying is what makes it find them.
-  #
-  # Raising this makes golems ignore newly placed chests for that long.
-  # Lowering it makes them retry more often; the cost is one wasted trip
-  # per retry, and only for a golem that has nothing else to do anyway.
+  # Does: how long (seconds) a type stays marked "can't place right now"
+  #   before the golem retries. Keep this short so new empty chests are
+  #   noticed quickly.
+  # Does not: permanently ban an item type from being sorted.
   unplaceable-ttl-seconds: 20
+
+# ----------------------------------------------------------------------
+# Item-frame labels — optional deposit filter on storage chests
+# ----------------------------------------------------------------------
+# Only applies to Chest / Trapped Chest that have an item frame (regular
+# or glowing, visible or invisible) attached to the chest (or the other
+# half of a double chest) AND that frame holds an item.
+item-frame-labels:
+  # Does (when true AND a frame+item is attached):
+  #   - that chest accepts only that item TYPE (dura/enchants ignored)
+  #   - an empty labeled chest does NOT accept other types
+  # Does not:
+  #   - change chests with no frame, or with an empty frame (those stay
+  #     fully vanilla: empty = any item, or same type already inside)
+  #   - match by name, lore, enchants, or durability — type only
+  #   - apply when this option is false (vanilla empty-chest rules again)
+  enabled: true

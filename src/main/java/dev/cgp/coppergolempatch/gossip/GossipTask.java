@@ -4,6 +4,7 @@ import dev.cgp.coppergolempatch.config.PluginConfig;
 import dev.cgp.coppergolempatch.memory.ChestMemory;
 import dev.cgp.coppergolempatch.memory.GolemMemoryCache;
 import dev.cgp.coppergolempatch.memory.UnplaceableRegistry;
+import dev.cgp.coppergolempatch.util.ItemFrameLabels;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -14,6 +15,7 @@ import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Supplier;
 
@@ -127,8 +129,12 @@ public final class GossipTask implements Runnable {
     }
 
     private boolean acceptsItem(Container container, Material itemType) {
-        // Vanilla matches a deposit chest by "empty, or contains this item
-        // type anywhere" against the whole chest, not just its first slot.
+        if (config.get().itemFrameLabelsEnabled()) {
+            Set<Material> labels = ItemFrameLabels.labelsOn(container.getBlock());
+            if (!labels.isEmpty() && !labels.contains(itemType)) {
+                return false;
+            }
+        }
         boolean sawAnyItem = false;
         for (ItemStack stack : container.getInventory().getContents()) {
             if (stack != null && stack.getType() != Material.AIR) {
